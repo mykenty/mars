@@ -1,0 +1,16 @@
+[Unit]
+Description=mars-api
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/default/mars-api
+ExecStart=/opt/mars-api/bin/mars-api --exec
+ExecStop=/opt/mars-api/bin/mars-api --stop
+PIDFile=/opt/mars-api/run/mars-api.pid
+KillMode=process
+Restart=on-failure
+User=
+Group=
+
+[Install]
+WantedBy=multi-user.target

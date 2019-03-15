@@ -1,0 +1,185 @@
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-1.11.3.js"></script>
+    <title>Mars Rover</title>
+    <style>
+      fieldset {
+        position: relative;
+        padding: 1rem;
+        margin: 20px 0;
+        border: solid #f8f9fa;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-3" style="max-width:768px">
+      <h1 class="mb-5">Mars Rover</h1>
+      <form id="formMR">
+        <div class="form-group">
+          <label for="size">Plateau size</label>
+          <div class="row pb-3">
+            <div class="col">
+              <input type="text" class="form-control " id="plateauColumn" placeholder="Enter plateau columns" maxlength="1"  value="5" />
+            </div>
+            <div class="col">
+              <input type="text" class="form-control" id="plateauRow" placeholder="Enter plateau rows" maxlength="1"  value="5" />
+            </div>
+          </div>
+          <small id="note" class="form-text text-muted">maximum rover could be added 10</small>
+        </div>
+        <fieldset id="buildyourform">
+          <div class="form-group">
+            <button type="button" class="btn btn-secondary" id="btnAdd">Add Rover</button>
+            <small id="errAddMsg" class="ml-3"></small>
+          </div>
+        </fieldset>
+        
+        <div id="msgError" class="alert alert-danger" role="alert" style="display: none"></div>
+        <div id="msgSuccess" class="alert alert-success" role="alert" style="display: none"></div>
+        <div>
+          <button type="button" class="btn btn-primary btn-block" id="btnSubmit">Submit</button>
+        </div>
+        
+      </form>
+
+    </div>
+    <script>
+      $("#btnAdd").click(function () {
+        var lastField = $("#buildyourform div[class=form-group]:last");
+        var intId = (lastField && lastField.length && lastField.data("idx") + 1) || 1;
+
+        if(intId > 10){
+          $('#errAddMsg').text('Only 10 rovers allow!');
+          $('#errAddMsg').addClass("text-danger");
+          return false;
+        }
+
+        var fieldWrapper = $('<div class="form-group" name="field" id="field' + intId + '"/>');
+        fieldWrapper.data("idx", intId);
+        fieldWrapper.append('<label>Rover '+intId+'</label>');
+        let row1 = $('<div class="row">'
+            + '<div class="col">'
+            + '<input type="text" class="form-control" name="roverX" maxlength="1" placeholder="Position X" value="1" />'
+            + '</div>'
+            + '<div class="col">'
+            + '<input type="text" class="form-control" name="roverY" maxlength="1" placeholder="Position Y" value="2" />'
+            + '</div>'
+            + '<div class="col">'
+            + '<input type="text" class="form-control" name="roverH" maxlength="1" placeholder="Header" value="N" />'
+            + '</div>'
+          + '</div>');
+        
+        let row2 = $('<div class="row pt-3 pb-3">'
+          + '<div class="col">'
+          + ' <input type="text" class="form-control" name="roverI" maxlength="12" placeholder="Instructions" value="LMLMLMLMM" />'
+          + ' </div>'
+          + '</div>');
+
+        fieldWrapper.append(row1);
+        fieldWrapper.append(row2);
+        $("#buildyourform").append(fieldWrapper);
+      });
+
+      $("#btnSubmit").click(function(event) {
+        //reset
+        $('#msgError').text('');
+        $('#msgError').hide();
+        $('#msgSuccess').text('');
+        $('#msgSuccess').hide();
+        $('input').each(
+          function(index){  
+            var input = $(this);
+            input.removeClass('border-danger');
+          }
+        );
+
+
+        //check require
+        let err = false;
+        $('input').each(
+          function(index){  
+            var input = $(this);
+            if(!input.val().length){
+              input.addClass('border-danger');
+              err = true;
+            }
+          }
+        );
+
+        if(err){
+          $('#msgError').text('These fields are required!');
+          $('#msgError').show();
+          return false;
+        }
+
+        //check number
+        $('input[name=roverX],input[name=roverY],#plateauColumn,#plateauRow').each(
+          function(index){  
+            let input = $(this);
+            if(isNaN(input.val())){
+              input.addClass('border-danger');
+              err = true;
+            }
+          }
+        );
+
+        if(err){
+          $('#msgError').text('Some field(s) are invalid number!');
+          $('#msgError').show();
+          return false;
+        }
+          
+        let arr = [], data = '';
+        arr.push($('#plateauColumn').val() + ' ' + $('#plateauRow').val());
+        $('div[name=field]').each(
+          function(index){  
+            let div = $(this);
+            let inputs = div.find("input")
+            if(inputs.length >= 4){
+              arr.push($(inputs[0]).val() + ' ' + $(inputs[1]).val() + ' ' + $(inputs[2]).val() 
+                + '\n' + $(inputs[3]).val());
+            }
+          }
+        );
+
+        data = arr.join('\n');
+        //console.log(data);
+
+        $.ajax({
+          type: "POST",
+          url: '/marsrover',
+          data: {data},
+          success: function( data ) {
+            let resultArr = data.split('\n'), result = '';
+            if(resultArr.length <= 1){
+              $('#msgError').html(data);
+              $('#msgError').show();
+            }
+            else{
+              resultArr.map(
+                function(info, index){
+                  index ++;
+                  if(info)
+                    result += 'Rover ' + index + ': ' + info + '<br />';
+                }
+              );
+
+              //console.log(resultArr);
+              $('#msgSuccess').html(result);
+              $('#msgSuccess').show();
+            }
+          }
+        });
+      });
+    </script>
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  </body>
+</html>

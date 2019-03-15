@@ -1,0 +1,1 @@
+java -jar ./target/mars-api-1.0-SNAPSHOT.jar
